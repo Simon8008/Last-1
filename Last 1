@@ -1,0 +1,175 @@
+import pexpect
+import getpass
+import netmiko
+
+
+#Define variables
+deviceType = "cisco_ios"
+hostIP = "192.168.1.1"
+userName = "cisco"
+pwd = "cisco"
+secret = "cisco"
+
+connectionType = input("Do you want to connect via SSH or Telnet?: ")
+if connectionType == 'Telnet':
+  
+    #Create telnet session
+    session = pexpect.spawn('telnet ' + hostIP, encoding='utf-8',
+                                timeout=20)
+    result = session.expect (['Username:', pexpect.TIMEOUT])
+
+    # Check for error, if exists then display error and exists
+    if result != 0:
+        print('---Failure! creating sessions for: ',  hostIP)
+        exit()
+
+    # Session is expecting username, enter details
+    session.sendline(userName)
+    result = session.expect (['Password:', pexpect.TIMEOUT])
+
+    #Check for error, if exists then display error and exit
+    if result != 0:
+        print ('--- FAILURE! entering username: ', userName)
+        exit()
+
+    #Session is expecting password, enter details
+    session.sendline(pwd)
+    result = session.expect (['#', pexpect.TIMEOUT])
+
+    # Check for error, if exists then display error and exit
+    if result != 0:
+        print('---FAILURE! entering password: ', pwd)
+        exit()
+
+    # Display a success message if it works 
+    print('---------------------------------')
+    print('')
+    print('--- Sucess! connecting to: ',  hostIP)
+    print('---               Username: ', userName)
+    print('---               Password: ', pwd)
+    print('')
+    print('----------------------------------')
+
+    #Terminate telnet to advice and close session
+    session.sendline('quit')
+    session.close()
+elif connectionType == "ssh":
+    
+######################################
+
+# Define variables
+    ip_address = '192.168.56.101'
+    username = 'prne'
+    password = 'cisco123!'
+    password_enable = 'class123!'
+
+# Create the SSH session
+    session = pexpect.spawn('ssh ' + username + '@' + ip_address, encoding='utf-8', timeout=20)
+    result = session.expect(['Password:', pexpect.TIMEOUT, pexpect.EOF])
+
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print('--- FAILURE! creating session for: ', ip_address)
+        exit()
+
+#Session expecting password, enter details
+    session.sendline(password)
+    result = session.expect (['>', pexpect.TIMEOUT, pexpect.EOF])
+
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print('--- FAILURE! entering password: ', password)
+        exit()
+
+# Enter enable mode 
+    session.sendline('enable')
+    result = session.expect (['Password: ', pexpect.TIMEOUT, pexpect.EOF])
+   
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print('--- FAILURE entering enable mode')
+        exit ()
+
+# Send enable password details
+    session.sendline(password_enable)
+    result = session.expect(['#', pexpect.TIMEOUT, pexpect.EOF])
+
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print('--- FAILURE! entering enable mode after sending password')
+        exit ()
+
+# Enter configuration mode
+    session.sendline('configure terminal')
+    result = session.expect([r'.\(config\)#', pexpect.TIMEOUT, pexpect.EOF])
+
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print('--- FAILURE! entering config mode')
+        exit ()
+
+# Change the hostname to R1
+    session.sendline('hostname R1')
+    result = session.expect([r'R1\(config\)#', pexpect.TIMEOUT, pexpect.EOF])
+
+# Check for error, if exists then display error and exit
+    if result != 0:
+        print = ('--- Failure! setting hostname')
+
+# Exit config mode
+    session.sendline('exit')
+
+# Exit enable mode 
+    session.sendline('exit')
+
+# Display a success message if works
+    print('---------------------------------------')
+    print('')
+    print('--- Success! connecting to: ', ip_address)
+    print('---              Username: ', username)
+    print('---              Password: ', password)
+    print('')
+    print('----------------------------------------')
+
+# Terminate SSH session
+    session.close()
+else:
+    print("Option not found")
+    
+##########################################################
+
+Network_device = {
+    "device_type": "",
+    "host": "192.168.1.1",
+    "username": "cisco",
+    "password": getpass(),
+}
+
+backup = input("Would you like to create a backup")
+if connectionType == "telnet":
+    Network_device["device_type"] = "cisco_ios_telnet"
+    session = netmiko.ConnectionHandler(**Network_device)
+    session.enable()
+    running_config = session.send_command("show running-config")
+    print(running_config)
+    session.send_command("exit")
+    commmand = True
+
+elif connectionType == "SSH":
+    Network_device["device_type"] = "cisco_ios_telnet"
+    session = netmiko.ConnectionHandler(**Network_device)
+    session.enable()
+    running_config = session.send_command("show running-config")
+    print(running_config)
+    session.send_command("exit")
+    commmand = True
+    
+if backup == "yes":
+    file1 = open("config.txt", "w")
+    file1.write(running_config)
+
+    
+
+##########################
+
+
